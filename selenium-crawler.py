@@ -6,11 +6,6 @@ from bs4 import BeautifulSoup
 src = 'https://coinmarketcap.com/'
 
 
-def get_soup_from_url(url, browser):
-    browser.get(url)
-    return BeautifulSoup(browser.page_source, 'html.parser')
-
-
 def get_browser():
     current_location = os.getcwd()
     return webdriver.Chrome(current_location + '/drivers/chromedriver')
@@ -28,14 +23,22 @@ if __name__ == '__main__':
     data = []
     headers = ['#', 'Name', 'Market Cap', 'Price',
                'Volume (24h)', 'Circulating Supply', 'Change (24h)']
-    soup = get_soup_from_url(src, browser)
 
-    rows = soup.find_all('tr')
-    rows = rows[3:]
-    for row in rows:
-        cols = row.find_all('td')
-        cols = cols[:-2]
-        row_data = [col.get_text() for col in cols]
-        data.append(row_data)
+    browser.get(src)
+    while True:
+        try:
+            soup = BeautifulSoup(browser.page_source, 'html.parser')
+            rows = soup.find_all('tr')
+            rows = rows[3:]
+            for row in rows:
+                cols = row.find_all('td')
+                cols = cols[:-2]
+                row_data = [col.get_text() for col in cols]
+                data.append(row_data)
+            next_link = browser.find_element_by_link_text('Next 100 →')
+            next_link.click()
+        except Exception:
+            break
+
     browser.close()
     export_to_csv(data, headers)
